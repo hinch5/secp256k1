@@ -717,6 +717,26 @@ int secp256k1_ec_pubkey_combine(const secp256k1_context* ctx, secp256k1_pubkey *
     return 1;
 }
 
+int secp256k1_derive_public(const secp256k1_context* ctx, const unsigned char *digest,const unsigned char *pubkey,unsigned char *new_key) {
+    secp256k1_scalar digest_scalar;
+    secp256k1_gej g, g1;
+    secp256k1_ge pubkey_ge;
+    size_t pub_size = 33;
+    int ov = 0;
+
+    secp256k1_scalar_set_b32(&digest_scalar, digest, &ov);
+
+    secp256k1_ecmult_gen(&ctx->ecmult_gen_ctx, &g, &digest_scalar);
+
+    secp256k1_eckey_pubkey_parse(&pubkey_ge, pubkey, pub_size);
+    secp256k1_gej_add_ge(&g1, &g, &pubkey_ge);
+
+    secp256k1_ge_set_gej(&pubkey_ge, &g1);
+    secp256k1_eckey_pubkey_serialize(&pubkey_ge, new_key, &pub_size, 1);
+
+    return 1;
+}
+
 #ifdef ENABLE_MODULE_ECDH
 # include "modules/ecdh/main_impl.h"
 #endif
